@@ -1,15 +1,21 @@
 {
    "editThis_description": {
-      "message": "Edit This Cookie is a cookie manager. You can add, delete, edit, search, protect and block cookies!"
+      "message": "EditThisCookie is a cookie manager. You can add, delete, edit, search, protect and block cookies!"
    },
    "editThis_deleteAll": {
       "message": "Delete all"
    },
    "editThis_flagAll": {
-      "message": "Flag and delete all"
+      "message": "Block and delete all"
+   },
+   "editThis_Show_Flag_And_Delete_All": {
+      "message": "Show \"Block and delete all\" button"
    },
    "editThis_addNew": {
-      "message": "Add a new cookie"
+      "message": "New cookie"
+   },
+   "editThis_newFilter": {
+      "message": "New filter"
    },
    "editThis_backToList": {
       "message": "Back to list"
@@ -71,6 +77,10 @@
    "editThis_seconds": {
       "message": "Seconds"
    },
+   "editThis_no_cookies": {
+      "message": "No cookies here!"
+   },
+   
    "editThis_Alert_deleteAll": {
       "message": "Delete all cookies for current website?"
    },
@@ -84,14 +94,26 @@
       "message": "Set as readonly"
    },
    "editThis_Flag_Cookie": {
-      "message": "Flag cookie"
+      "message": "Block cookie"
+   },
+   "editThis_Flag_CookieWithDomain": {
+      "message": "Block by domain"
+   },
+   "editThis_Flag_CookieWithName": {
+      "message": "Block by name"
+   },
+   "editThis_Flag_CookieWithValue": {
+      "message": "Block by value"
    },
    "editThis_Flag_New_Cookie": {
-      "message": "Flag new cookie"
+      "message": "Block new cookie"
    },
    "editThis_Show_Alerts": {
       "message": "Always ask for confirmation"
-   },   
+   },
+   "editThis_ShowCommandsLabels": {
+      "message": "Show labels next to icons"
+   },
    "editThis_Is_ReadOnly": {
       "message": "Protected"
    },
@@ -117,7 +139,7 @@
       "message": "Blocked cookies"
    },
    "editThis_Protected_Cookies": {
-      "message": "Protected Cookies"
+      "message": "Protected cookies"
    },
    "editThis_Options": {
       "message": "Options"
@@ -125,8 +147,20 @@
    "editThis_Donate": {
       "message": "Contribute"
    },
+   "editThis_Contribute_PayPal": {
+      "message": "Contribute with PayPal"
+   },
+   "editThis_Contribute_Bitcoins": {
+      "message": "Contribute in Bitcoins"
+   },
+   "editThis_Send_Donations_To": {
+      "message": "You can send donations to:"
+   },
    "editThis_help": {
       "message": "Help"
+   },
+   "editThis_getting_started": {
+      "message": "Getting started"
    },
    "editThis_ReadOnly_Def": {
       "message": "A protected cookie is a cookie which can't be modified by any website or extension"
@@ -147,7 +181,10 @@
       "message": "Stats"
    },
    "editThis_support": {
-      "message": "Support us"
+      "message": "Support me"
+   },
+   "editThis_support_etc": {
+      "message": "Support EditThisCookie"
    },
    "editThis_noBlockAdded": {
       "message": "No block rules added"
@@ -161,6 +198,12 @@
    "editThis_cancel": {
       "message": "Cancel"
    },
+   "editThis_yes": {
+      "message": "Yes"
+   },
+   "editThis_no": {
+      "message": "No"
+   },
    "editThis_noReadOnlyAdded": {
       "message": "No cookies protected yet"
    },
@@ -171,7 +214,7 @@
       "message": "We guarantee no personal data is ever shared!"
    },
    "editThis_timesUsed": {
-      "message": "You used 'Edit This Cookie' $1 times"
+      "message": "You used 'EditThisCookie' $1 times"
    },
    "editThis_statsSince": {
       "message": "Cookie statistics since: $1"
@@ -180,19 +223,19 @@
       "message": "No data yet :("
    },
    "editThis_cookiesCreated": {
-      "message": "Cookies Created"
+      "message": "Cookies created"
    },
    "editThis_cookiesModified": {
-      "message": "Cookies Modified"
+      "message": "Cookies modified"
    },
    "editThis_cookiesDeleted": {
-      "message": "Cookies Deleted"
+      "message": "Cookies deleted"
    },
    "editThis_cookiesProtected": {
-      "message": "Read-Only Cookies Protected"
+      "message": "Read-only cookies protected"
    },
    "editThis_cookiesFlagged": {
-      "message": "Flagged Cookies Deleted"
+      "message": "Blocked cookies deleted"
    },
    "editThis_cookiesShortened": {
       "message": "Cookies' expiration shortened"
@@ -224,16 +267,16 @@
       "message": "to enter the amount by hand click here"
    },
    "editThis_ppBenefit1": {
-      "message": "You will get a thank you email, and a tiny little place in my heart"
+      "message": "You will get a tiny little place in my heart"
    },
    "editThis_ppBenefit2": {
       "message": "Your name will be added to the Wall of Fame"
    },
    "editThis_ppBenefit3": {
-      "message": "You'll receive an awesome 'Edit This Cookie' Thank You postcard!"
+      "message": "You'll receive a thank you email"
    },
    "editThis_ppBenefit4": {
-      "message": "You can name any bug that annoys you in Edit This Cookie and I'll fix it super-fast!"
+      "message": "You can name any bug that annoys you in EditThisCookie and I'll fix it super-fast!"
    },
    "editThis_ppBenefit5": {
       "message": "You can name a feature you want to be implemented and I'll make it true! (just don't ask for the impossible :P )"
@@ -245,7 +288,7 @@
       "message": "You are very generous! If we ever meet I'll get you a few beers (hey, beer is important)"
    },
    "editThis_ppBenefit8": {
-      "message": "You will be the new head of my religion and, if you wish, I will send you the following book:"
+      "message": "And an Italian pizza!"
    },
    "editThis_gospelBookTitle": {
       "message": "The Gospel of the Flying Spaghetti Monster"
@@ -290,16 +333,19 @@
       "message": "Choose the preferred export format for cookies"
    },
    "editThis_Copy_Cookies": {
-      "message": "Export cookies"
+      "message": "Export"
    },
    "editThis_Copied_clipboard": {
       "message": "Cookies copied to clipboard"
    },
    "editThis_Paste_Cookies": {
-      "message": "Import Cookies"
+      "message": "Import"
    },
    "editThis_Paste_Cookie_Here": {
       "message": "Paste here the cookies to import. Accepted formats:"
+   },
+   "editThis_Show_DevTools_Panel": {
+      "message": "Show the DevTools panel"
    },
    "editThis_Save": {
       "message": "Save"
@@ -314,7 +360,7 @@
       "message": "Money raised so far"
    },
    "editThis_Donation_Date": {
-      "message": "Donation Date"
+      "message": "Donation date"
    },
    "editThis_Amount": {
       "message": "Amount"
@@ -323,20 +369,35 @@
       "message": "Humanitarian program"
    },
    "editThis_Source_Code": {
-      "message": "Source Code"
+      "message": "Source code"
    },
    "editThis_Source_Code_Intro": {
-      "message": "Check Edit This Cookie's source code on $1",
-      "description": "It will read: Check Edit This Cookie's source code on GitHub"
+      "message": "Check EditThisCookie's source code on $1",
+      "description": "It will read: Check EditThisCookie's source code on GitHub"
    },
    "editThis_Rate_ETC": {
-      "message": "Rate Edit This Cookie"
+      "message": "Rate EditThisCookie"
    },
    "editThis_Rate_Us_Intro": {
-      "message": "If you like Edit This Cookie, leave a rating on the Chrome Web Store"
+      "message": "If you like EditThisCookie, leave a rating on the Chrome Web Store"
    },
    "editThis_Show_Christmas_Icon": {
       "message": "Show the Santa's hat icon"
+   },
+   "editThis_Show_Domain_Before_Name": {
+      "message": "Show the domain before the cookie's name"
+   },
+   "editThis_Sort_Cookies": {
+      "message": "Sort cookies"
+   },
+   "editThis_Sort_Cookies_Alpha": {
+      "message": "by name"
+   },
+   "editThis_Sort_Cookies_Domain_Alpha": {
+      "message": "by domain and name"
+   },
+   "editThis_updated": {
+      "message": "has been updated. Click here to check what's new."
    },
    
    "editThis_": {

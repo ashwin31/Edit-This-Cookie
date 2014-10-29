@@ -1,5 +1,6 @@
 var url;
 var currentTabID;
+var isTabIncognito = false;
 var cookieList = new Array();
 var newCookie = false;
 var pasteCookie = false;
@@ -7,23 +8,15 @@ var isSeparateWindow = false;
 var createAccordionCallback, createAccordionCallbackArguments;
 var scrollsave;
 
+$.fx.speeds._default = 200
+
 jQuery(document).ready(function(){
 	++data.nPopupClicked;
 	start();
-	//$("input:checkbox").uniform();
 });
 
-/*
-customLocale = preferences.customLocale;
-updateCallback = function() {
-	if(customLocale != preferences.customLocale) {
-		location.reload(true);
-	}
-};
-*/
-
 function start() {
-	resizeCommandsFontSize();
+	setLoaderVisible(true);
 	
 	var arguments = getUrlVars();
 	if(arguments.url == undefined) {
@@ -32,7 +25,6 @@ function start() {
 			currentTabID = tab.id;
 			var filter = new Filter();
 			filter.setUrl(url);
-			//filter.setDomain(getDomain(url));
 			createList(filter.getFilter());
 			document.title = document.title + "-" + url;
 		});
@@ -40,14 +32,13 @@ function start() {
 		isSeparateWindow = true;
 		url = decodeURI(arguments.url);
 		currentTabID = parseInt(decodeURI(arguments.id));
+		isTabIncognito = decodeURI(arguments.incognito) == "true";
 		var filter = new Filter();
 		filter.setUrl(url);
-		//filter.setDomain(getDomain(url));
 		createList(filter.getFilter());
 		document.title = document.title + "-" + url;
 	}
 }
-
 
 function submit(currentTabID) {
 	if(newCookie)
@@ -64,9 +55,10 @@ function submitAll(currentTabID) {
 	var nCookiesChangedThisTime = 0;
 	cookies.each(function() {
 		
-		var index = $(".index", 		$(this) ).val();
+		var index = $(".index", 			$(this) ).val();
 		
 		var name 		=  $(".name", 		$(this) ).val();
+		console.log(name);
 		var value 		=  $(".value", 		$(this) ).val();
 		var domain 		=  $(".domain", 	$(this) ).val();
 		var hostOnly 	=  $(".hostOnly",	$(this) ).prop("checked");
@@ -76,10 +68,10 @@ function submitAll(currentTabID) {
 		var session 	=  $(".session", 	$(this) ).prop("checked");
 		var storeId 	=  $(".storeId", 	$(this) ).val();
 		 
-		var expiration	=  $(".expiration", $(this)).scroller('getDate');	//$(".expiration",	$(this) ).val();
+		var expiration	=  $(".expiration", $(this) ).scroller('getDate');	//$(".expiration",	$(this) ).val();
 		var expirationDate = (expiration != null) ? expiration.getTime() / 1000.0 : (new Date().getTime()) / 1000.0;
 		
-		newCookie = {};
+		var newCookie = {};
 		newCookie.url = url;
 		newCookie.name = name.replace(";", "").replace(",", "");
 		value = value.replace(";","");
@@ -150,7 +142,7 @@ function submitNew() {
 }
 
 function createList(filters) {
-	var filteredCookies = [];	
+	var filteredCookies = [];
 	
 	if(filters == null)
 		filters = {};
@@ -160,10 +152,19 @@ function createList(filters) {
 		filterURL.url = filters.url;
 	if(filters.domain != undefined)
 		filterURL.domain = filters.domain;
-		
+	
+	if(!isSeparateWindow) {
+		$('#submitDiv').css({
+			'bottom': 0
+		});
+	} else {
+		$('#submitDiv').addClass("submitDivSepWindow");
+	}
+	
 	chrome.cookies.getAll(filterURL, function(cks) {
+		var currentC;
 		for(var i=0; i<cks.length; i++) {
-			var currentC = cks[i];
+			currentC = cks[i];
 			
 			if(filters.name != undefined && currentC.name.toLowerCase().indexOf(filters.name.toLowerCase()) == -1)
 				continue;
@@ -190,19 +191,29 @@ function createList(filters) {
 		}
 		cookieList = filteredCookies;
 		
-		//setTimeout(function(){								//Testing if it fixes a weird bug with jQuery's accordion //Apparently does
-			createAccordionList(cookieList, function(){
-				if(!isSeparateWindow) {
-					$('#submitDiv').css({
-						'bottom': 0
-					});
-				} else {
-					$('#submitDiv').addClass("submitDivSepWindow");
-				}
-				setEvents();
-				//$("#loading").hide();
-			});
-		//}, 0);
+		if(cookieList.length == 0) {
+			swithLayout();
+			setEvents();
+			setLoaderVisible(false);
+			return;
+		}
+		
+		cookieList.sort(function (a, b) {
+			if(preferences.sortCookiesType == "domain_alpha") {
+				var compDomain = a.domain.toLowerCase().localeCompare(b.domain.toLowerCase());
+				if(compDomain)
+					return compDomain;
+			} 
+			return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+		});
+		
+		createAccordionList(cookieList, function(){
+			swithLayout();
+			setEvents();
+			$("input:checkbox").uniform();
+			//$("input").uniform();
+			setLoaderVisible(false);
+		});
 	});
 }
 
@@ -221,11 +232,28 @@ function createAccordionList(cks, callback, callbackArguments) {
 	for(var i=0; i<cks.length; i++) {
 		currentC = cks[i];
 		
-		
-	 	var titleText = (currentC.name) + ((preferences.showDomain) ? " | " + (currentC.domain) : "");
-	 	var titleElement = $("<h3/>").addClass(currentC.name).append($("<a/>").text(titleText).attr("href", "#"));
+	 	var domainText = "";
+	 	if(preferences.showDomain) {
+	 		domainText = currentC.domain;
+	 		if(preferences.showDomainBeforeName) {
+	 			domainText = domainText + " | ";
+	 		} else {
+	 			domainText = " | " + domainText;
+	 		}
+	 	}
+	 	
+	 	var titleText;
+	 	if(preferences.showDomainBeforeName) {
+	 		titleText = $("<p/>").text(domainText).append($("<b/>").text(currentC.name));
+	 		if(currentC.isProtected)
+	 			$(":first-child", titleText).css("color","green");
+	 	} else {
+	 		titleText = $("<p/>").append($("<b/>").text(currentC.name)).append($("<span/>").text(domainText));
+	 	}
+	 	
+	 	var titleElement = $("<h3/>").append($("<a/>").html(titleText.html()).attr("href", "#"));
+	 	
 		var cookie = $(".cookie_details_template").clone().removeClass("cookie_details_template");
-		cookie.addClass(currentC.name);
 		
 		$(".index", cookie).val(i);
 		$(".name", cookie).val(currentC.name);
@@ -270,9 +298,13 @@ function createAccordionList(cks, callback, callbackArguments) {
 		$("#cookiesList").append(titleElement);
 		$("#cookiesList").append(cookie);
 	}
-
+	
+	//$('textarea', '#cookiesList').autosize({append: "\n"});
+	//$('textarea', '#pasteCookie').autosize({append: "\n"});
+	
 	$("#cookiesList").accordion({
 		autoHeight: false,
+		heightStyle: "content",
 		collapsible: true,
 		active: cks.length-1,
 		create: function(event, ui) {
@@ -319,11 +351,27 @@ function importCookies() {
 }
 
 function setEvents() {
-
-	$("#submitButton").button().unbind().click(function(){
+	if(preferences.showLabelChooserBanner)
+		$("#labelChooserBanner").show();
+	
+	$(".enableLabelsButton").unbind().click(function(){
+		preferences.showCommandsLabels = true;
+		preferences.showLabelChooserBanner = false;
+		$("#labelChooserBanner").slideUp();
+		$(".commands-table").first().animate({opacity: 0}, function() {
+			$(".commands-row", ".commands-table").addClass("commands-row-texy");
+			$(".commands-table").first().animate({opacity: 1});
+		});
+	});
+	$(".labelChooserClose").unbind().click(function(){
+		$("#labelChooserBanner").slideUp();
+		preferences.showLabelChooserBanner = false;
+	});
+	
+	$("#submitButton:first-child").unbind().click(function(){
 		submit(currentTabID);
 	});
-	if(cookieList.length > 0) {		
+	if(cookieList.length > 0) {
 		$("#submitDiv").show();
 	}
 	$("#submitFiltersButton").button();
@@ -378,65 +426,53 @@ function setEvents() {
 		startAlertDialog(_getMessage("Alert_deleteAll"), okFunction, function(){});
 	});
 	
-	$("#flagAllButton").unbind().click(function() {
-		if(cookieList.length == 0)
-			return false;
-		var okFunction = function() {
-			nCookiesFlaggedThisTime = cookieList.length;
-			for(var i=0; i<cookieList.length; i++) {
-				var currentCookie = cookieList[i];
-				if(currentCookie.isProtected)
-					continue;
-				var newRule = {};
-				newRule.domain = currentCookie.domain;
-				newRule.name = currentCookie.name;
-				addBlockRule(newRule);
-				deleteCookie(url, currentCookie.name, currentCookie.storeId);
-			}
-			data.nCookiesFlagged += nCookiesFlaggedThisTime;
-			location.reload(true);
-			return;
-		}
-		startAlertDialog(_getMessage("flagAll"), okFunction, function(){});
-	});
+	if(preferences.showCommandsLabels) {
+		$(".commands-row", ".commands-table").addClass("commands-row-texy");
+	}
 	
-	$("#copyButton").attr("title",preferences.copyCookiesType);
+	if(preferences.showFlagAndDeleteAll) {
+		$("#flagAllButton").show();
+		$("#flagAllButton").unbind().click(function() {
+			if(cookieList.length == 0)
+				return false;
+			var okFunction = function() {
+				nCookiesFlaggedThisTime = cookieList.length;
+				for(var i=0; i<cookieList.length; i++) {
+					var currentCookie = cookieList[i];
+					if(currentCookie.isProtected)
+						continue;
+					var newRule = {};
+					newRule.domain = currentCookie.domain;
+					newRule.name = currentCookie.name;
+					addBlockRule(newRule);
+					deleteCookie(url, currentCookie.name, currentCookie.storeId);
+				}
+				data.nCookiesFlagged += nCookiesFlaggedThisTime;
+				location.reload(true);
+				return;
+			}
+			startAlertDialog(_getMessage("flagAll"), okFunction, function(){});
+		});
+	} else {
+		$("#flagAllButton").hide();
+	}
+	
+	//$("#copyButton").attr("title",preferences.copyCookiesType);
 
 	$("#refreshButton").unbind().click(function() {
 		location.reload(true);
 	});
 	
 	$("#addCookieButton").unbind().click(function() {
-		$("#addCookieButton").fadeOut('fast', function(){
-			$("#backToList").fadeIn('fast');
-		});
-		$("#cookieFilter").slideUp();
-		$("#submitFiltersButton").slideUp();
-		$("#cookiesList").slideUp('fast');
-		$("#pasteCookie").slideUp('fast');
-		$("#newCookie").slideDown('fast');
-		$("#submitDiv").show();
-		$('#newCookie input.name').focus();
 		newCookie = true;
 		pasteCookie = false;
+		swithLayout("new");
 	});
 	
 	$("#backToList").unbind().click(function() {
-		$("#backToList").fadeOut('fast', function(){
-			$("#addCookieButton").fadeIn('fast');
-		});
-		$("#cookieFilter").slideUp();
-		$("#submitFiltersButton").slideUp();
-		$("#newCookie").slideUp('fast');
-		$("#pasteCookie").slideUp('fast');
-		$("#cookiesList").slideDown('fast');
-		if(cookieList.length == 0) {
-			$("#submitDiv").hide();
-		} else {
-			$("#submitDiv").show();
-		}
 		newCookie = false;
 		pasteCookie = false;
+		swithLayout();
 	});
 	
 	$("#clearNew").unbind().click(function() {
@@ -468,7 +504,7 @@ function setEvents() {
 		$("#copiedToast").fadeIn(function(){
 			setTimeout(function(){
 				$("#copiedToast").fadeOut();
-			}, 800);
+			}, 2500);
 			
 		});
 		$(this).animate({ backgroundColor: "#B3FFBD" }, 300, function() {
@@ -477,18 +513,9 @@ function setEvents() {
 	});
 	
 	$("#pasteButton").unbind().click(function() {
-		$("#addCookieButton").fadeOut('fast', function(){
-			$("#backToList").fadeIn('fast');
-		});
-		$("#cookieFilter").slideUp();
-		$("#submitFiltersButton").slideUp();
-		$("#cookiesList").slideUp('fast');
-		$("#newCookie").slideUp('fast');
-		$("#pasteCookie").slideDown('fast');
-		$(".value", "#pasteCookie").focus();
-		$("#submitDiv").show();
 		newCookie = false;
 		pasteCookie = true;
+		swithLayout("paste");
 	});
 	
 	$("#searchButton").unbind().click(function() {
@@ -539,9 +566,19 @@ function setCookieEvents() {
 		var name 	= $(".name", cookie).val();
 		var storeId = $(".storeId", cookie).val();
 		var okFunction = function() {
-			deleteCookie(url, name, storeId);
+			deleteCookie(url, name, storeId, function(success) {
+				if(success === true) {
+					var head = cookie.prev('h3');
+					cookie.add(head).slideUp(function(){
+						$(this).remove();
+						swithLayout();
+					});
+					
+				} else {
+					location.reload(true);
+				}
+			});
 			++data.nCookiesDeleted;
-			location.reload(true);
 		}
 		startAlertDialog(_getMessage("Alert_deleteCookie") + ": \"" + name + "\"?", okFunction, function(){})
 	});
@@ -550,25 +587,17 @@ function setCookieEvents() {
 		var domain 	= $(".domain", 	cookie).val();
 		var name 	= $(".name", 	cookie).val();
 		var value 	= $(".value", 	cookie).val();
-	
+		
 		$("#filterByDomain","#cookieFilter").text(domain);
 		$("#filterByName","#cookieFilter").text(name);
 		$("#filterByValue","#cookieFilter").text(value);
-	
-		$("#addCookieButton").fadeOut('fast',function(){
-			$("#backToList").fadeIn('fast');
-		});
 		
-		$("#newCookie").hide();
-		$("#submitDiv").hide();
-		$("#pasteCookie").hide();
-		$("#cookiesList").slideUp('fast');
-		$("#cookieFilter").slideDown('fast');
-		$("#submitFiltersButton").slideDown('fast');
+		swithLayout("flag");
 	});
 	
 	$(".protectOne").click(function() {
 		var cookie = $(this).closest(".cookie");
+		var titleName = $("b", cookie.prev()).first();
 		var index = $(".index", cookie).val();
 		isProtected = switchReadOnlyRule(cookieList[index]);
 		
@@ -577,10 +606,12 @@ function setCookieEvents() {
 			$(".unprotected", cookie).fadeOut('fast',function(){
 				$(".protected", cookie).fadeIn('fast');
 			});
+			titleName.css("color","green");
 		} else {
 			$(".protected", cookie).fadeOut('fast',function(){
 				$(".unprotected", cookie).fadeIn('fast');
 			});
+			titleName.css("color","#000");
 		}
 	});
 	
@@ -588,7 +619,7 @@ function setCookieEvents() {
 	$('.expiration').scroller({
 		preset: 'datetime',
 		minDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-		maxDate: new Date(2030, now.getMonth(), now.getDate()),
+		maxDate: new Date(2050, now.getMonth(), now.getDate()),
 		dateFormat: "dd/mm/yy",
 		timeFormat: "hh:ii A",
 		theme: 'android-ics light',
@@ -601,7 +632,7 @@ function setCookieEvents() {
 	$('#show').click(function(){
 		var cookie = $(this).closest(".cookie");
 		scrollsave = $('body').scrollTop();
-		$("html").scrollTop(0);		
+		$("html").scrollTop(0);
 		$('.expiration', cookie).scroller('show'); 
 		return false;
 	});
@@ -611,7 +642,6 @@ function setCookieEvents() {
 		$('body').scrollTop(scrollsave);
 		return false;
 	});
-	
 	
 	$(".domain",$("#newCookie")).val(getHost(url));
 }
@@ -626,22 +656,21 @@ function startAlertDialog(title, ok_callback, cancel_callback) {
 			$("#alert_wrapper").hide();
 			ok_callback();
 		});
-	}
-	else
+	} else {
 		return;
+	}
 	
 	if(cancel_callback != undefined) {
 		$("#alert_cancel").show();
 		$("#alert_cancel").unbind().click(function() {
-			$("#alert_wrapper").hide();
+			$("#alert_wrapper").hide('fade');
 			cancel_callback();
 		});
 	} else {
 		$("#alert_cancel").hide();
 	}
 	$("#alert_title_p").empty().text(title);
-	$("#alert_wrapper").show(100, function(){
-	});
+	$("#alert_wrapper").show('fade');
 }
 
 function clearNewCookieData() {
@@ -675,6 +704,7 @@ function find(pattern) {
 	$("#cookiesList").accordion( "option" , "active" , cookieList.length );
 }
 
+/*
 function resizeCommandsFontSize() {				//http://stackoverflow.com/questions/4165836/javascript-scale-text-to-fit-in-fixed-div
 	var largestCommandWidth = 0;
 	var size = 0;
@@ -700,4 +730,103 @@ function resizeCommandsFontSize() {				//http://stackoverflow.com/questions/4165
 		--size;
 	$(".commands-table").css("font-size", size);
 	$(resizer).detach()
+}
+*/
+
+/*
+	LAYOUTS = [
+		"default",
+		"list",
+		"empty",
+		"flag",
+		"paste",
+		"new"
+	]
+*/
+var lastLayout = "none";
+function swithLayout(newLayout) {
+	if(newLayout == undefined) {
+		newLayout = "default";
+	}
+	if(lastLayout == newLayout)
+		return;
+	if(newLayout != "default")
+		lastLayout = newLayout;
+	
+	if(newLayout == "default") {
+		$("#newCookie").slideUp();
+		$("#pasteCookie").slideUp();
+		$("#cookieFilter").slideUp();
+		$("#submitFiltersButton").slideUp();
+		
+		if($("h3", "#cookiesList").length) {
+			swithLayout("list");
+		} else {
+			swithLayout("empty");
+		}
+	} else if(newLayout == "list") {
+		$(".commands-table").first().animate({opacity: 0}, function() {
+			$("#deleteAllButton").show();
+			if(preferences.showFlagAndDeleteAll)
+				$("#flagAllButton").show();
+			$("#addCookieButton").show();
+			$("#backToList").hide();
+			$("#copyButton").show();
+			$("#pasteButton").show();
+			$("#searchButton").show();
+			$(".commands-table").first().animate({opacity: 1});
+		});
+		$("#noCookies").slideUp();
+		$("#cookiesList").slideDown();
+		$("#submitDiv").show();
+	} else if(newLayout == "empty") {
+		$(".commands-table").first().animate({opacity: 0}, function() {
+			$("#deleteAllButton").hide();
+			$("#flagAllButton").hide();
+			$("#addCookieButton").show();
+			$("#backToList").hide();
+			$("#copyButton").hide();
+			$("#pasteButton").show();
+			$("#searchButton").hide();
+			$(".commands-table").first().animate({opacity: 1});
+		});
+		$(".notOnEmpty").hide();
+		$("#noCookies").slideDown();
+		$("#cookiesList").slideUp();
+		$("#submitDiv").hide();
+	} else {
+		$(".commands-table").first().animate({opacity: 0}, function() {
+			$("#deleteAllButton").hide();
+			$("#flagAllButton").hide();
+			$("#addCookieButton").hide();
+			$("#backToList").show();
+			$("#copyButton").hide();
+			$("#pasteButton").hide();
+			$("#searchButton").hide();
+			$(".commands-table").first().animate({opacity: 1});
+		});
+		$("#noCookies").slideUp();
+		$("#cookiesList").slideUp();
+		if(newLayout == "flag") {
+			$("#newCookie").slideUp();
+			$("#pasteCookie").slideUp();
+			$("#cookieFilter").slideDown();
+			$("#submitFiltersButton").slideDown();
+			$("#submitDiv").hide();
+		} else if(newLayout == "paste") {
+			$("#newCookie").slideUp();
+			$("#pasteCookie").slideDown();
+			$("#cookieFilter").slideUp();
+			$("#submitFiltersButton").slideUp();
+			$("#submitDiv").show();
+			$(".value", "#new").focus();
+		} else if(newLayout == "new") {
+			$("#newCookie").slideDown();
+			$("#pasteCookie").slideUp();
+			$("#cookieFilter").slideUp();
+			$("#submitFiltersButton").slideUp();
+			$("#submitDiv").show();
+			$('#newCookie input.name').focus();
+		}
+	}
 }
